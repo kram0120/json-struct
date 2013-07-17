@@ -14,8 +14,6 @@ struct = JsonStruct.new(json)
 => #<JsonStruct a="b", c=#<JsonStruct d="e", f="g">, h=["i", "j", "k"]>
 struct.a
 => "b"
-struct.c.e
-=> nil
 struct.c.f
 => "g"
 struct.h
