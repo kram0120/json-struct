@@ -3,21 +3,21 @@ require "ostruct"
 class JsonStruct < OpenStruct
   def initialize(hash = nil, options = nil)
     if hash
-      exclude_filters = filters(options, :exclude)
-      include_filters = filters(options, :only)
+      exclude_filters = extract_option(options, :exclude, [])
+      include_filters = extract_option(options, :only, [])
+      name_changes = extract_option(options, :rename, {})
 
-      hash_copy = Hash[hash]
+      hash_copy = hash.each_with_object({}) do |(k, v), h|
+        next if (exclude_filters.include? k)
+        next if (!include_filters.empty? && !include_filters.include?(k))
+        if name_changes[k]
+          h[name_changes[k]] = v
+        else
+          h[k] = v
+        end
+      end
+
       for k, v in hash_copy
-        if (exclude_filters.include? k)
-          hash_copy.delete(k)
-          next
-        end
-
-        if (!include_filters.empty? && !include_filters.include?(k))
-          hash_copy.delete(k)
-          next
-        end
-
         if v.is_a? Hash
           hash_copy[k] = JsonStruct.new(v, options)
         elsif v.is_a? Array
@@ -42,11 +42,8 @@ class JsonStruct < OpenStruct
   end
 
   private
-  def filters(options, key)
-    filter = []
-    if options
-      filter = options[key] || []
-    end
-    filter
+  def extract_option(options, key, default)
+    return default if !options
+    options.fetch(key, default)
   end
 end

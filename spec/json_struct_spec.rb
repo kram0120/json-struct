@@ -3,6 +3,7 @@ require "json"
 
 describe JsonStruct do
   let(:struct) {JsonStruct.new(json)}
+  let(:json) { {a: 'b', c: {d: 'e', f: 'g'}, h: %w(i j k)} }
 
   describe 'with simple JSON' do
     let(:json) { {a: 'b', c: 'd'} }
@@ -105,7 +106,6 @@ describe JsonStruct do
   end
 
   describe 'filters' do
-    let(:json) { {a: 'b', c: {d: 'e', f: 'g'}, h: %w(i j k)} }
     it 'filters out excluded keys' do
       struct = JsonStruct.new(json, exclude: [:a, :f])
       struct.should_not respond_to(:a)
@@ -130,6 +130,21 @@ describe JsonStruct do
     it 'exclude filters take precedence over only filters' do
       struct = JsonStruct.new(json, exclude: [:a], only: [:a])
       struct.should_not respond_to(:a)
+    end
+  end
+
+  describe 'renaming' do
+    let(:struct) { JsonStruct.new(json, rename: {a: 'alpha', c: 'charlie'}) }
+
+    it 'allows the caller to rename keys' do
+      struct.should_not respond_to(:a)
+      struct.should_not respond_to(:c)
+      struct.alpha.should == 'b'
+      struct.charlie.d.should == 'e'
+    end
+
+    it 'generates JSON with the renamed keys' do
+      struct.as_json.should == {alpha: 'b', charlie: {d: 'e', f: 'g'}, h: %w(i j k)}
     end
   end
 end
